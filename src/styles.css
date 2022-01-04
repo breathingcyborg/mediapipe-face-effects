@@ -1,0 +1,59 @@
+body {
+  background: #000;
+  color: #fff;
+}
+/* column wise on mobile */
+.video-container {
+  display: flex;
+  flex-direction: column;
+  max-width: 1024px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.video-container > div {
+  flex: 1;
+  margin-bottom: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.video-container h2 {
+  font-family: serif;
+}
+
+.video-container.loading > .loader {
+  display: flex;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 999;
+}
+
+.video-container > .loader {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  color: #000;
+}
+
+/* side by side on desktop  */
+@media screen and (min-width: 900px) {
+  .video-container {
+    flex-direction: row;
+  }
+}
+
+.input_video {
+  width: 100%;
+  height: auto;
+}
+
+.output_canvas {
+  width: 100%;
+  height: auto;
+}
