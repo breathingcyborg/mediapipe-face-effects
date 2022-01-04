@@ -71,14 +71,14 @@ export class FacesManager {
     this.scene.add(this.faces);
   }
 
-  removFaces() {
+  removeFaces() {
     this.scene.remove(this.faces);
   }
 
   update() {
     if (this.needsUpdate) {
       if (this.faces != null) {
-        this.removFaces();
+        this.removeFaces();
       }
       if (this.landmarks != null) {
         this.addFaces();
