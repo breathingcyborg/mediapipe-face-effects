@@ -35,6 +35,7 @@ const config = {
     new CopyPlugin({
       patterns: [
         { from: "node_modules/@mediapipe/face_mesh", to: "mediapipe" },
+        { from: "src/video", to: "video" },
       ],
     }),
   ],
