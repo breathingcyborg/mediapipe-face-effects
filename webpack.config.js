@@ -8,7 +8,8 @@ const config = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '[name].[contenthash].js'
+    filename: '[name].[contenthash].js',
+    publicPath: process.env.PUBLIC_PATH || '/'
   },
   devtool: 'eval-source-map',
   module: {

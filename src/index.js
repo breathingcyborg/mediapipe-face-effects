@@ -4,6 +4,8 @@ import { FacesManager } from './js/faces_manager';
 import { VideoBackground } from './js/video_bg';
 import { FaceMesh } from '@mediapipe/face_mesh';
 
+const PUBLIC_PATH = __webpack_public_path__.replace(/\/$/, '') || '/';
+
 const template = `
 <div class="video-container">
   <span class="loader">
@@ -12,7 +14,7 @@ const template = `
   <div>
     <h2>Original Video</h2>
     <video class="input_video" controls playsinline>
-      <source  src="/video/videoplayback2.mp4">
+      <source  src="${PUBLIC_PATH}/video/videoplayback2.mp4">
     </video>
   </div>
   <div>
@@ -38,7 +40,7 @@ let supported = true;
 async function initFacemesh() {
 
   faceMesh = new FaceMesh({locateFile: (file) => {
-    let url =  `/mediapipe/${file}`;
+    let url =  `${PUBLIC_PATH}/mediapipe/${file}`;
     return url
   }});
 
