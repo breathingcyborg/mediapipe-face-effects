@@ -37,6 +37,7 @@ const config = {
       patterns: [
         { from: "node_modules/@mediapipe/face_mesh", to: "mediapipe" },
         { from: "src/video", to: "video" },
+        { from: "src/3d", to: "3d" },
       ],
     }),
   ],

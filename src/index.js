@@ -3,8 +3,9 @@ import * as THREE from 'three';
 import { FacesManager } from './js/faces_manager';
 import { VideoBackground } from './js/video_bg';
 import { FaceMesh } from '@mediapipe/face_mesh';
-
-const PUBLIC_PATH = __webpack_public_path__.replace(/\/$/, '') || '/';
+import { PUBLIC_PATH } from './js/public_path';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { transformLandmarks } from './js/landmarks_helpers';
 
 const template = `
 <div class="video-container">
@@ -14,7 +15,7 @@ const template = `
   <div>
     <h2>Original Video</h2>
     <video class="input_video" controls playsinline>
-      <source  src="${PUBLIC_PATH}/video/videoplayback2.mp4">
+      <source  src="${PUBLIC_PATH}/video/videoplayback.mp4">
     </video>
   </div>
   <div>
@@ -28,6 +29,8 @@ document.querySelector("#app").innerHTML = template;
 
 const video = document.querySelector('.input_video');
 const canvas = document.querySelector('.output_canvas');
+const useOrtho = true;
+const debug = false;
 
 let faceMesh;
 let videoBg;
@@ -66,7 +69,9 @@ function onResults({ image, multiFaceLandmarks }) {
     videoBg.setImage(image);
   }
   if (multiFaceLandmarks != null && facesManager != null) {
-    facesManager.updateLandmarks(multiFaceLandmarks[0]);
+    multiFaceLandmarks = multiFaceLandmarks[0]
+    multiFaceLandmarks = transformLandmarks(multiFaceLandmarks);
+    facesManager.updateLandmarks(multiFaceLandmarks);
   }
 }
 
@@ -102,6 +107,10 @@ async function sendImage() {
   }
 }
 
+const cameraDistance = (height, fov) => {
+  return (height / 2) / Math.tan((fov/2) * Math.PI / 180);
+}
+
 /**
  * Initialize THREE js
  **/
@@ -113,15 +122,35 @@ function initThree() {
     canvas,
     devicePixelRation: window.devicePixelRatio || 1
   });
-  const camera = new THREE.OrthographicCamera(
-    - renderer.domElement.width / 2,
-    renderer.domElement.width / 2,
-    renderer.domElement.height / 2,
-    - renderer.domElement.height / 2,
-    -2000, 
-    2000
-  )
-  camera.position.z = 1
+
+  const fov = 63;
+  let camera;
+  let controls;  
+
+  if (useOrtho) {
+    camera = new THREE.OrthographicCamera(
+      - renderer.domElement.width / 2,
+      renderer.domElement.width / 2,
+      renderer.domElement.height / 2,
+      - renderer.domElement.height / 2,
+      -2000, 
+      2000
+    )
+    camera.position.z = 1
+  } else {
+      camera = new THREE.PerspectiveCamera(
+        fov,
+        renderer.domElement.width / renderer.domElement.height,
+        1.0, // near
+        10000, // far
+      )
+      camera.position.z = cameraDistance(renderer.domElement.height, fov); 
+  }
+
+  if (debug) {
+    controls = new OrbitControls( camera, renderer.domElement );
+    controls.update();  
+  }
 
   // video background for canvas
   videoBg = new VideoBackground(scene, 
@@ -181,6 +210,10 @@ function initThree() {
 
     requestAnimationFrame(animate);
 
+    if (controls) {
+      controls.update();
+    }
+
     if (resizeRendererToDisplaySize(renderer)) {
 
       // facemanager needs to scale faces according to 
@@ -193,10 +226,14 @@ function initThree() {
       // camera need to be adjusted according to
       // renderer dimensions
       camera.aspect = video.clientWidth / video.clientHeight;
-      camera.top = video.clientHeight / 2
-      camera.bottom = -video.clientHeight / 2
-      camera.left = -video.clientWidth / 2
-      camera.right = video.clientWidth / 2
+      if (camera.type == 'OrthographicCamera') {
+        camera.top = video.clientHeight / 2
+        camera.bottom = -video.clientHeight / 2
+        camera.left = -video.clientWidth / 2
+        camera.right = video.clientWidth / 2  
+      } else {
+        camera.position.z = cameraDistance(video.clientHeight, fov);
+      }
       camera.updateProjectionMatrix();
     }
 

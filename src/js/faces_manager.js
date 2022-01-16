@@ -1,35 +1,18 @@
 
 import * as THREE from 'three';
+import { PUBLIC_PATH } from './public_path';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { scaleLandmark, makeGeometry } from './landmarks_helpers';
 
-import { 
-  FACE_MESH_INDEX_BUFFER, 
-  FACE_MESH_UV  
-} from './face_geom.js';
-
-const makeGeometry = (landmarks, width, height, zScale = 5) => {
-  let geometry = new THREE.BufferGeometry();
-  
-  let vertices = [];
-  let uvs = [];
-  for(let i = 0; i < 468; i++) {
-    let {x, y, z} = landmarks[i];
-    x = (-0.5 + x) * width;
-    y = ( 0.5 - y) * height;
-    z = ((-z + 0.5) * zScale)
-    let vertex =  [x, y, z];
-    vertices.push(...vertex);
-  }
-  for (let j = 0; j < 468; j++) {
-    uvs[j * 2] = FACE_MESH_UV[j][0];
-    uvs[j * 2 + 1] = FACE_MESH_UV[j][1];
-  }
-
-  geometry.setIndex(FACE_MESH_INDEX_BUFFER);
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  geometry.computeVertexNormals();
-
-  return geometry;
+function loadModel( file ) {
+  return new Promise( ( res, rej ) => {
+      const loader = new GLTFLoader();
+      loader.load( file, function ( gltf ) {
+        res( gltf.scene );
+      }, undefined, function ( error ) {
+          rej( error );
+      } );
+  });
 }
 
 export class FacesManager {
@@ -41,6 +24,11 @@ export class FacesManager {
     this.width = width;
     this.height = height;
     this.material = new THREE.MeshNormalMaterial();
+    this.loadGlasses();
+  }
+
+  async loadGlasses() {
+    this.glasses = await loadModel( `${PUBLIC_PATH}/3d/black-glasses/scene.gltf` );
   }
 
   updateDimensions(width, height) {
@@ -58,16 +46,85 @@ export class FacesManager {
     this.material = material;
     this.material.needsUpdate = true;
   }
+
+  addGlasses() {
+    let midEyes = scaleLandmark(this.landmarks[168], this.width, this.height);
+    let leftEyeInnerCorner = scaleLandmark(this.landmarks[463], this.width, this.height);
+    let rightEyeInnerCorner = scaleLandmark(this.landmarks[243], this.width, this.height);
+    let noseBottom = scaleLandmark(this.landmarks[2], this.width, this.height);
+    let leftEyeUpper1 = scaleLandmark(this.landmarks[446], this.width, this.height);
+    let rightEyeUpper1 = scaleLandmark(this.landmarks[226], this.width, this.height);
+
+    if (this.glasses) {
+  
+      // position
+      this.glasses.position.set(
+        midEyes.x,
+        midEyes.y,
+        midEyes.z,
+      )
+
+      // scale to make glasses
+      // as wide as distance between
+      // left eye corner and right eye corner
+      const eyeDist = Math.sqrt(
+        ( leftEyeUpper1.x - rightEyeUpper1.x ) ** 2 +
+        ( leftEyeUpper1.y - rightEyeUpper1.y ) ** 2 +
+        ( leftEyeUpper1.z - rightEyeUpper1.z ) ** 2
+      );
+      // 1.4 is width of 3d model of glasses
+      const scale = eyeDist / 1.4;
+      this.glasses.scale.set(scale, scale, scale);
+
+      // use two vectors to rotate glasses
+      // Vertical Vector from midEyes to noseBottom
+      // is used for calculating rotation around x and z axis
+      // Horizontal Vector from leftEyeCorner to rightEyeCorner
+      // us use to calculate rotation around y axis
+      let upVector = new THREE.Vector3(
+        midEyes.x - noseBottom.x,
+        midEyes.y - noseBottom.y,
+        midEyes.z - noseBottom.z,
+      ).normalize();
+
+      let sideVector = new THREE.Vector3(
+        leftEyeInnerCorner.x - rightEyeInnerCorner.x,
+        leftEyeInnerCorner.y - rightEyeInnerCorner.y,
+        leftEyeInnerCorner.z - rightEyeInnerCorner.z,
+      ).normalize();
+
+      let zRot = (new THREE.Vector3(1, 0, 0)).angleTo(
+        upVector.clone().projectOnPlane(
+          new THREE.Vector3(0, 0, 1)
+        )
+      ) - (Math.PI / 2)
+
+      let xRot = (Math.PI / 2) - (new THREE.Vector3(0, 0, 1)).angleTo(
+        upVector.clone().projectOnPlane(
+          new THREE.Vector3(1, 0, 0)
+        )
+      );
+
+      let yRot =  (
+        new THREE.Vector3(sideVector.x, 0, sideVector.z)
+      ).angleTo(new THREE.Vector3(0, 0, 1)) - (Math.PI / 2);
+      
+      this.glasses.rotation.set(xRot, yRot, zRot);
+
+      this.scene.add(this.glasses);
+    }
+  }
+
+  removeGlasses() {
+    this.scene.remove(this.glasses);
+  }
   
   addFaces() {
-    let geometry = makeGeometry(
-      this.landmarks, 
-      this.width, 
-      this.height, 
-      this.width
-    );
+    // create faces
+    let geometry = makeGeometry(this.landmarks);
     this.faces = new THREE.Mesh(geometry, this.material);
-    this.faces.position.set(0, 0, 0)
+    this.faces.position.set(0, 0, 0);
+    this.faces.scale.set(this.width, this.height, this.width);
     this.scene.add(this.faces);
   }
 
@@ -79,9 +136,11 @@ export class FacesManager {
     if (this.needsUpdate) {
       if (this.faces != null) {
         this.removeFaces();
+        this.removeGlasses();
       }
       if (this.landmarks != null) {
         this.addFaces();
+        this.addGlasses();
       }
       this.needsUpdate = false;
     }
