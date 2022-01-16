@@ -9,7 +9,7 @@ export class FacemeshLandmarksProvider {
   }
 
   send(image) {
-    this.faceMesh.send({image: image});
+    return this.faceMesh.send({image: image});
   }
 
   onResults({ image, multiFaceLandmarks }) {
