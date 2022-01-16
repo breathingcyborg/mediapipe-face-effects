@@ -1,8 +1,8 @@
 
 import * as THREE from 'three';
-import { PUBLIC_PATH } from './public_path';
+import { PUBLIC_PATH } from '../public_path';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { scaleLandmark, makeGeometry } from './landmarks_helpers';
+import { scaleLandmark, makeGeometry } from '../facemesh/landmarks_helpers';
 
 function loadModel( file ) {
   return new Promise( ( res, rej ) => {
