@@ -12,7 +12,7 @@ const template = `
   <div>
     <h2>Original Video</h2>
     <video class="input_video" controls playsinline>
-      <source  src="${PUBLIC_PATH}/video/videoplayback.mp4">
+      <source  src="${PUBLIC_PATH}/video/videoplayback2.mp4">
     </video>
   </div>
   <div>

@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { PUBLIC_PATH } from '../public_path';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { scaleLandmark, makeGeometry } from '../facemesh/landmarks_helpers';
+import { scaleLandmark } from '../facemesh/landmarks_helpers';
 
 function loadModel( file ) {
   return new Promise( ( res, rej ) => {
@@ -15,20 +15,19 @@ function loadModel( file ) {
   });
 }
 
-export class FacesManager {
+export class Glasses {
   constructor(scene, width, height) {
     this.scene = scene;
-    this.needsUpdate = false;
-    this.landmarks = null;
-    this.faces = null;
     this.width = width;
     this.height = height;
-    this.material = new THREE.MeshNormalMaterial();
+    this.needsUpdate = false;
+    this.landmarks = null;
     this.loadGlasses();
   }
 
   async loadGlasses() {
     this.glasses = await loadModel( `${PUBLIC_PATH}/3d/black-glasses/scene.gltf` );
+    this.glasses.name = 'glasses';
   }
 
   updateDimensions(width, height) {
@@ -42,12 +41,7 @@ export class FacesManager {
     this.needsUpdate = true;
   }
 
-  updateMaterial(material) {
-    this.material = material;
-    this.material.needsUpdate = true;
-  }
-
-  addGlasses() {
+  updateGlasses() {
     let midEyes = scaleLandmark(this.landmarks[168], this.width, this.height);
     let leftEyeInnerCorner = scaleLandmark(this.landmarks[463], this.width, this.height);
     let rightEyeInnerCorner = scaleLandmark(this.landmarks[243], this.width, this.height);
@@ -111,6 +105,11 @@ export class FacesManager {
       
       this.glasses.rotation.set(xRot, yRot, zRot);
 
+    }
+  }
+
+  addGlasses() {
+    if (this.glasses) {
       this.scene.add(this.glasses);
     }
   }
@@ -118,31 +117,18 @@ export class FacesManager {
   removeGlasses() {
     this.scene.remove(this.glasses);
   }
-  
-  addFaces() {
-    // create faces
-    let geometry = makeGeometry(this.landmarks);
-    this.faces = new THREE.Mesh(geometry, this.material);
-    this.faces.position.set(0, 0, 0);
-    this.faces.scale.set(this.width, this.height, this.width);
-    this.scene.add(this.faces);
-  }
-
-  removeFaces() {
-    this.scene.remove(this.faces);
-  }
 
   update() {
     if (this.needsUpdate) {
-      if (this.faces != null) {
-        this.removeFaces();
-        this.removeGlasses();
+      let inScene = !!this.scene.getObjectByName('glasses');
+      let shouldShow = !!this.landmarks;
+      if (inScene) {
+        shouldShow ? this.updateGlasses() : this.removeGlasses();
+      } else {
+        if (shouldShow) {
+          this.addGlasses();
+        }
       }
-      if (this.landmarks != null) {
-        this.addFaces();
-        this.addGlasses();
-      }
-      this.needsUpdate = false;
     }
   }
 }
