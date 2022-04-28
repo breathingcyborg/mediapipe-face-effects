@@ -1,6 +1,7 @@
 import "./styles.css";
 import { PUBLIC_PATH } from './js/public_path';
 import { VideoFrameProvider } from './js/video_frame_provider';
+import { CameraFrameProvider } from './js/camera_frame_provider';
 import { FacemeshLandmarksProvider } from './js/facemesh/landmarks_provider';
 import { SceneManager } from "./js/three_components/scene_manager";
 
@@ -60,7 +61,21 @@ async function main() {
 
   sceneManager = new SceneManager(canvas, debug, useOrtho);
   facemeshLandmarksProvider = new FacemeshLandmarksProvider(onLandmarks);
-  videoFrameProvider = new VideoFrameProvider(video, onFrame);
+
+  if (confirm("Use Camera?")) {
+    // unload video
+    video.pause();
+    video.querySelector("source").remove();
+    video.removeAttribute('src');
+    video.load();
+
+    videoFrameProvider = new CameraFrameProvider(video, onFrame);
+
+  } else {
+
+    videoFrameProvider = new VideoFrameProvider(video, onFrame);
+
+  }
   
   await facemeshLandmarksProvider.initialize();
   videoFrameProvider.start();

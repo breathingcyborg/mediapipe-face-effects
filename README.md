@@ -11,7 +11,6 @@ Realtime facemesh effects using mediapipe and Three JS. Works realtime even on o
 
 ## Todo
 * add more face effects
-* option to use camera
 * make it work on older android phones
 
 ## Building and running on localhost
