@@ -27,6 +27,12 @@ export class Glasses {
 
   async loadGlasses() {
     this.glasses = await loadModel( `${PUBLIC_PATH}/3d/black-glasses/scene.gltf` );
+
+    // scale glasses
+    const bbox = new THREE.Box3().setFromObject(this.glasses);
+    const size = bbox.getSize(new THREE.Vector3());
+    this.scaleFactor = size.x;
+
     this.glasses.name = 'glasses';
   }
 
@@ -42,12 +48,18 @@ export class Glasses {
   }
 
   updateGlasses() {
+    // Points for reference
+    // https://raw.githubusercontent.com/google/mediapipe/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png
+
     let midEyes = scaleLandmark(this.landmarks[168], this.width, this.height);
     let leftEyeInnerCorner = scaleLandmark(this.landmarks[463], this.width, this.height);
     let rightEyeInnerCorner = scaleLandmark(this.landmarks[243], this.width, this.height);
     let noseBottom = scaleLandmark(this.landmarks[2], this.width, this.height);
-    let leftEyeUpper1 = scaleLandmark(this.landmarks[446], this.width, this.height);
-    let rightEyeUpper1 = scaleLandmark(this.landmarks[226], this.width, this.height);
+    
+    // These points seem appropriate 446, 265, 372, 264
+    let leftEyeUpper1 = scaleLandmark(this.landmarks[264], this.width, this.height);
+    // These points seem appropriate 226, 35, 143, 34
+    let rightEyeUpper1 = scaleLandmark(this.landmarks[34], this.width, this.height);
 
     if (this.glasses) {
   
@@ -66,8 +78,7 @@ export class Glasses {
         ( leftEyeUpper1.y - rightEyeUpper1.y ) ** 2 +
         ( leftEyeUpper1.z - rightEyeUpper1.z ) ** 2
       );
-      // 1.4 is width of 3d model of glasses
-      const scale = eyeDist / 1.4;
+      const scale = eyeDist / this.scaleFactor;
       this.glasses.scale.set(scale, scale, scale);
 
       // use two vectors to rotate glasses
