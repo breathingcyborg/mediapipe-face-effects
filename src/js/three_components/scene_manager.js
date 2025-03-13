@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { FaceMask } from './face_mask';
 import { Glasses } from './glasses';
 import { VideoBackground } from './video_bg';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { Environment } from './environment';
 
 /**
  * 
@@ -32,14 +33,24 @@ export class SceneManager {
     this.useOrtho = useOrtho;
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      devicePixelRation: window.devicePixelRatio || 1
+      devicePixelRation: window.devicePixelRatio || 1,
+      antialias: true,
     });
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1;
+
     this.fov = 63;
     this.buildCamera();
     this.buildControls();
     this.buildVideoBg();
     this.buildFaceMask();
     this.buildGlasses();
+    this.buildEnvironment();
+  }
+
+  buildEnvironment() {
+    this.environment = new Environment(this.scene, this.renderer);
   }
 
   buildVideoBg() {

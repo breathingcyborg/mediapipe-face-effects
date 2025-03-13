@@ -10,6 +10,14 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v2
 
+      - name: Setup Node.js 12.22.12
+        uses: actions/setup-node@v2
+        with:
+          node-version: 12.22.12
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
       - name: Install and Build 🔧 # This example project is built using npm and outputs the result to the 'build' folder. Replace with the commands required to build your project, or remove this step entirely if your site is pre-built.
         env:
           PUBLIC_PATH: https://breathingcyborg.github.io/mediapipe-face-effects/

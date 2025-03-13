@@ -52,8 +52,12 @@ export class VideoBackground {
         color: new THREE.Color(0xcccccc)
       });
     }
+
+    const videoTexture = new THREE.CanvasTexture(this.image);
+    videoTexture.colorSpace = THREE.SRGBColorSpace;
+
     let material = new THREE.MeshBasicMaterial({
-        map: new THREE.CanvasTexture(this.image),
+        map: videoTexture,
     });
     return material;
   }
